@@ -51,12 +51,19 @@ bool ChoiceTask::isCompleted()
 	{
 		// If the player is under water then allow all keypresses so they can jump out
 		if( pMinecraft->localplayers[tutorial->getPad()]->isUnderLiquid(Material::water) ) return false;
-
+#ifdef _WINDOWS64
 		if(!m_bConfirmMappingComplete && InputManager.GetValue(pMinecraft->player->GetXboxPad(), m_iConfirmMapping) > 0 || KMInput.IsKeyDown(VK_RETURN))
+#else
+		if (!m_bConfirmMappingComplete && InputManager.GetValue(pMinecraft->player->GetXboxPad(), m_iConfirmMapping) > 0)
+#endif
 		{
 			m_bConfirmMappingComplete = true;
 		}
+#ifdef _WINDOWS64
 		if(!m_bCancelMappingComplete && InputManager.GetValue(pMinecraft->player->GetXboxPad(), m_iCancelMapping) > 0 || KMInput.IsKeyDown('B'))
+#else
+		if (!m_bCancelMappingComplete && InputManager.GetValue(pMinecraft->player->GetXboxPad(), m_iCancelMapping) > 0)
+#endif
 		{
 			m_bCancelMappingComplete = true;
 		}
