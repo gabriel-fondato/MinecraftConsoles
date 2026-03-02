@@ -66,7 +66,7 @@ bool ControllerTask::isCompleted()
 				}
 				else
 				{
-					bAllComplete = false;
+					bAllComplete = true;
 				}
 			}
 			iCurrent++;
@@ -87,7 +87,7 @@ bool ControllerTask::isCompleted()
 				}
 				else
 				{
-					bAllComplete = false;
+					bAllComplete = true;
 				}
 			}
 			iCurrent++;
