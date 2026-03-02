@@ -1,14 +1,14 @@
 # MinecraftConsoles
 
-# [DOWNLOAD THE GAME](https://github.com/smartcmd/MinecraftConsoles/releases/tag/nightly)
-
 [![Discord](https://img.shields.io/badge/Discord-Join%20Server-5865F2?logo=discord&logoColor=white)](https://discord.gg/5CSzhc9t)
 
 ![img.png](.github/IMG_8725.png)
 
 ## Introduction
 
-This project contains the source code of Minecraft Legacy Console Edition v1.3.0494.0, with some fixes and improvements applied.
+This project contains the source code of Minecraft Legacy Console Edition v1.3.0494.0 from https://archive.org/details/minecraft-legacy-console-edition-source-code, with some fixes and improvements applied
+
+[Download](https://github.com/smartcmd/MinecraftConsoles/releases/tag/nightly)
 
 ## Features
 
@@ -16,6 +16,8 @@ This project contains the source code of Minecraft Legacy Console Edition v1.3.0
 - Added support for keyboard and mouse input
 - Added fullscreen mode support (toggle using F11)
 - Disabled V-Sync for better performance
+- Added a high-resolution timer path on Windows for smoother high-FPS gameplay timing
+- Device's screen resolution will be used as the game resolution instead of using a fixed resolution (1920x1080)
 
 ## Controls (Keyboard & Mouse)
 
