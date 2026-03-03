@@ -37,6 +37,7 @@
 #include "Resource.h"
 #include "..\..\Minecraft.World\compression.h"
 #include "..\..\Minecraft.World\OldChunkStorage.h"
+#include "Network\WinsockNetLayer.h"
 
 #include "Xbox/resource.h"
 
@@ -83,6 +84,9 @@ BOOL g_bWidescreen = TRUE;
 
 int g_iScreenWidth = 1920;
 int g_iScreenHeight = 1080;
+
+UINT g_ScreenWidth = 1920;
+UINT g_ScreenHeight = 1080;
 
 // Fullscreen toggle state
 static bool g_isFullscreen = false;
@@ -403,6 +407,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		if (LOWORD(wParam) == WA_INACTIVE)
 			KMInput.SetCapture(false);
 		break;
+	case WM_SETFOCUS:
+		{
+			// Re-capture when window receives focus (e.g., after clicking on it)
+			Minecraft *pMinecraft = Minecraft::GetInstance();
+			bool shouldCapture = pMinecraft && app.GetGameStarted() && !ui.GetMenuDisplayed(0) && pMinecraft->screen == NULL;
+			if (shouldCapture)
+				KMInput.SetCapture(true);
+		}
+		break;
 	case WM_KILLFOCUS:
 		KMInput.SetCapture(false);
 		KMInput.ClearAllState();
@@ -416,7 +429,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			return TRUE;
 		}
 		return DefWindowProc(hWnd, message, wParam, lParam);
-
 	default:
 		return DefWindowProc(hWnd, message, wParam, lParam);
 	}
@@ -707,8 +719,6 @@ void CleanupDevice()
 	if( g_pd3dDevice ) g_pd3dDevice->Release();
 }
 
-
-
 int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 					   _In_opt_ HINSTANCE hPrevInstance,
 					   _In_ LPTSTR    lpCmdLine,
@@ -717,7 +727,16 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
 
-	SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
+	// 4J-Win64: set CWD to exe dir so asset paths resolve correctly
+	{
+		char szExeDir[MAX_PATH] = {};
+		GetModuleFileNameA(NULL, szExeDir, MAX_PATH);
+		char *pSlash = strrchr(szExeDir, '\\');
+		if (pSlash) { *(pSlash + 1) = '\0'; SetCurrentDirectoryA(szExeDir); }
+	}
+
+	// Declare DPI awareness so GetSystemMetrics returns physical pixels
+	SetProcessDPIAware();
 	g_iScreenWidth = GetSystemMetrics(SM_CXSCREEN);
 	g_iScreenHeight = GetSystemMetrics(SM_CYSCREEN);
 
@@ -744,7 +763,6 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 			//g_iScreenHeight = 544;
 		}
 	}
-
 
 	// Initialize global strings
 	MyRegisterClass(hInstance);
@@ -910,7 +928,15 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	// ProfileManager for XN_LIVE_INVITE_ACCEPTED for QNet.
 	g_NetworkManager.Initialise();
 
+	for (int i = 0; i < MINECRAFT_NET_MAX_PLAYERS; i++)
+	{
+		IQNet::m_player[i].m_smallId = (BYTE)i;
+		IQNet::m_player[i].m_isRemote = false;
+		IQNet::m_player[i].m_isHostPlayer = (i == 0);
+		swprintf_s(IQNet::m_player[i].m_gamertag, 32, L"Player%d", i);
+	}
 
+	WinsockNetLayer::Initialize();
 
 	// 4J-PB moved further down
 	//app.InitGameSettings();
@@ -1082,7 +1108,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 		PIXEndNamedEvent();
 
 		PIXBeginNamedEvent(0,"Network manager do work #1");
-		//		g_NetworkManager.DoWork();
+		g_NetworkManager.DoWork();
 		PIXEndNamedEvent();
 
 		//		LeaderboardManager::Instance()->Tick();
@@ -1208,19 +1234,42 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 			}
 		}
 
-		// F11 toggles fullscreen
+		// F1 toggles the HUD, F3 toggles the debug console overlay, F11 toggles fullscreen
+		if (KMInput.IsKeyPressed(VK_F1))
+		{
+			int primaryPad = ProfileManager.GetPrimaryPad();
+			unsigned char displayHud = app.GetGameSettings(primaryPad, eGameSetting_DisplayHUD);
+			app.SetGameSettings(primaryPad, eGameSetting_DisplayHUD, displayHud ? 0 : 1);
+			app.SetGameSettings(primaryPad, eGameSetting_DisplayHand, displayHud ? 0 : 1);
+		}
+		
+		if (KMInput.IsKeyPressed(VK_F3))
+		{
+			static bool s_debugConsole = false;
+			s_debugConsole = !s_debugConsole;
+			ui.ShowUIDebugConsole(s_debugConsole);
+		}
+
+#ifdef _DEBUG_MENUS_ENABLED
+		if (KMInput.IsKeyPressed(VK_F4))
+		{
+			ui.NavigateToScene(ProfileManager.GetPrimaryPad(), eUIScene_DebugOverlay, NULL, eUILayer_Debug);
+		}
+#endif
+
 		if (KMInput.IsKeyPressed(VK_F11))
 		{
 			ToggleFullscreen();
 		}
 
-		// TAB opens host options menu. - Vvis :3
+		// TAB opens game info menu. - Vvis :3 - Updated by detectiveren
 		if (KMInput.IsKeyPressed(VK_TAB) && !ui.GetMenuDisplayed(0))
 		{
 			if (Minecraft* pMinecraft = Minecraft::GetInstance())
 			{
 				{
-					ui.NavigateToScene(0, eUIScene_InGameHostOptionsMenu);
+					ui.NavigateToScene(0, eUIScene_InGameInfoMenu);
+
 				}
 			}
 		}
@@ -1243,7 +1292,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 		{
 			if (Minecraft* pMinecraft = Minecraft::GetInstance())
 			{
-				if (pMinecraft->options && app.DebugSettingsOn() && 
+				if (pMinecraft->options && app.DebugSettingsOn() &&
 					app.GetGameStarted() && !ui.GetMenuDisplayed(0) && pMinecraft->screen == NULL)
 				{
 					ui.NavigateToScene(0, eUIScene_DebugOverlay, NULL, eUILayer_Debug);

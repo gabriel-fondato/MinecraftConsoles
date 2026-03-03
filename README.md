@@ -1,14 +1,19 @@
 # MinecraftConsoles
 
-[![Discord](https://img.shields.io/badge/Discord-Join%20Server-5865F2?logo=discord&logoColor=white)](https://discord.gg/5CSzhc9t)
+[![Discord](https://img.shields.io/badge/Discord-Join%20Server-5865F2?logo=discord&logoColor=white)](https://discord.gg/jrum7HhegA)
 
-![img.png](.github/IMG_8725.png)
+![Tutorial World](.github/TutorialWorld.png)
 
 ## Introduction
 
-This project contains the source code of Minecraft Legacy Console Edition v1.3.0494.0 from https://archive.org/details/minecraft-legacy-console-edition-source-code, with some fixes and improvements applied
+This project contains the source code of Minecraft Legacy Console Edition v1.6.0560.0 (TU19) from https://archive.org/details/minecraft-legacy-console-edition-source-code, with some fixes and improvements applied
 
-[Download](https://github.com/smartcmd/MinecraftConsoles/releases/tag/nightly)
+[Nightly Build](https://github.com/smartcmd/MinecraftConsoles/releases/tag/nightly)
+
+## Platform Support
+
+- **Windows**: Supported for building and running the project
+- **macOS / Linux**: The Windows nightly build may run through Wine or CrossOver based on community reports, but this is unofficial and not currently tested by the maintainers
 
 ## Features
 
@@ -18,6 +23,19 @@ This project contains the source code of Minecraft Legacy Console Edition v1.3.0
 - Disabled V-Sync for better performance
 - Added a high-resolution timer path on Windows for smoother high-FPS gameplay timing
 - Device's screen resolution will be used as the game resolution instead of using a fixed resolution (1920x1080)
+- LAN Multiplayer & Discovery
+
+## Multiplayer
+
+Basic LAN multiplayer is available on the Windows build
+
+- Hosting a multiplayer world automatically advertises it on the local network
+- Other players on the same LAN can discover the session from the in-game Join Game menu
+- Game connections use TCP port `25565` by default
+- LAN discovery uses UDP port `25566`
+- You can override your in-game username at launch with `username.txt`
+
+This feature is based on [LCEMP](https://github.com/LCEMP/LCEMP/)
 
 ## Controls (Keyboard & Mouse)
 
@@ -36,7 +54,8 @@ This project contains the source code of Minecraft Legacy Console Edition v1.3.0
 - **Use / Place**: `Right Click`
 - **Select Item**: `Mouse Wheel` or keys `1` to `9`
 - **Accept or Decline Tutorial hints**: `Enter` to accept and `B` to decline
-- **Host Options**: `TAB`
+- **Game Info (Player list and Host Options)**: `TAB`
+- **Toggle HUD**: `F1`
 - **Toggle Debug Info**: `F3`
 - **Open Debug Overlay**: `F4`
 
@@ -55,7 +74,12 @@ cmake -S . -B build -G "Visual Studio 17 2022" -A x64
 cmake --build build --config Debug --target MinecraftClient
 ```
 
+For more information, see [COMPILE.md](COMPILE.md)
+
 ## Known Issues
 
-- Builds for other platforms have not been tested and are most likely non-functional
-- There are some render bugs in the Release mode build
+- Native builds for platforms other than Windows have not been tested and are most likely non-functional. The Windows nightly build may still run on macOS and Linux through Wine or CrossOver, but that path is unofficial and not currently supported
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=smartcmd/MinecraftConsoles&type=date&legend=top-left)](https://www.star-history.com/?spm=a2c6h.12873639.article-detail.7.7b9d7fabjNxTRk#smartcmd/MinecraftConsoles&type=date&legend=top-left)
